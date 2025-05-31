@@ -30,5 +30,20 @@
   "networkError": "Network error occurred. Please try again.",
   "rememberCredentials": "Remember Email/Password",
   "loginDescription": "Login is required to use the reward service.",
-  "salesLogin": "Join as Business Account"
+  "salesLogin": "Join as Business Account",
+  "signInWithEduSense": "Sign in with UGOT",
+  "signInWithKakao": "Sign in with Kakao",
+  
+  "selectLoginMethod": "Choose Login Method",
+  "choosePreferredLoginMethod": "Select your preferred way to sign in",
+  "nativeLogin": "Quick Login",
+  "nativeLoginDescription": "Sign in directly using your device's native authentication",
+  "ssoLogin": "SSO Login",
+  "ssoLoginDescription": "Sign in through secure web-based authentication",
+  "loginWithEmail": "Login with Email/Password",
+  "dontHaveAccount": "Don't have an account?",
+  "signUp": "Sign Up",
+  "or": "OR",
+  "welcomeToReward": "Welcome to Reward Factory",
+  "rewardAppDescription": "Earn rewards by completing missions and challenges"
 }

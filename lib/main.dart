@@ -7,11 +7,17 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:dynamic_color/dynamic_color.dart';
+import 'package:responsive_framework/responsive_framework.dart';
+// import 'package:naver_login_sdk/naver_login_sdk.dart'; // API 문제로 임시 제거
 import 'router/app_router.dart';
 import 'providers/locale_provider.dart';
 import 'config/app_config.dart';
 import 'providers/auth_provider.dart';
 import 'services/dio_service.dart';
+import 'services/naver_login_service.dart';
+import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
+import 'theme/app_theme.dart';
 
 // 웹 전용 import를 조건부로 처리
 
@@ -20,6 +26,29 @@ void main() async {
   usePathUrlStrategy();
   const env = String.fromEnvironment('ENV', defaultValue: 'dev');
   AppConfig.initialize(env == 'prod' ? Environment.prod : Environment.dev);
+
+  // 카카오 SDK 초기화
+  if (!kIsWeb) {
+    KakaoSdk.init(
+      nativeAppKey: AppConfig.kakaoNativeAppKey,
+    );
+    if (kDebugMode) {
+      print('카카오 SDK 초기화 완료');
+    }
+  }
+  
+  // 네이버 SDK 초기화 (API 문제로 임시 제거)
+  // if (!kIsWeb) {
+  //   await NaverLoginSDK.initialize(
+  //     clientId: AppConfig.naverClientId,
+  //     clientName: AppConfig.naverClientName,
+  //     clientSecret: AppConfig.naverClientSecret,
+  //   );
+  //   if (kDebugMode) {
+  //     print('네이버 SDK 초기화 완료');
+  //   }
+  // }
+  await NaverLoginService.initializeNaverSDK(); // 웹뷰 기반 초기화
 
   if (kDebugMode) {
     print('\n=== App Configuration ===');
@@ -128,7 +157,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<LocaleProvider>(
       builder: (context, localeProvider, _) {
-        return MaterialApp.router(
+        return DynamicColorBuilder(
+          builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+            return MaterialApp.router(
           scaffoldMessengerKey: scaffoldMessengerKey,
           routerConfig: router,
           locale: localeProvider.locale,
@@ -144,35 +175,25 @@ class MyApp extends StatelessWidget {
           ],
           builder: (context, child) {
             DioService.init(context);
-            return child ?? const SizedBox.shrink();
+            return ResponsiveBreakpoints.builder(
+              child: child!,
+              breakpoints: [
+                const Breakpoint(start: 0, end: 450, name: MOBILE),
+                const Breakpoint(start: 451, end: 800, name: TABLET),
+                const Breakpoint(start: 801, end: 1920, name: DESKTOP),
+                const Breakpoint(start: 1921, end: double.infinity, name: '4K'),
+              ],
+            );
           },
-          theme: ThemeData(
-            pageTransitionsTheme: const PageTransitionsTheme(
-              builders: {
-                // 모든 플랫폼에 대해 애니메이션 제거
-                TargetPlatform.android: NoTransitionsBuilder(),
-                TargetPlatform.iOS: NoTransitionsBuilder(),
-                TargetPlatform.windows: NoTransitionsBuilder(),
-                TargetPlatform.macOS: NoTransitionsBuilder(),
-                TargetPlatform.linux: NoTransitionsBuilder(),
-              },
-            ),
-            useMaterial3: true,
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-            fontFamily: 'NotoSansKR', // 본 폰트 설정
-            textTheme: const TextTheme(
-              bodyLarge: TextStyle(
-                fontFamily: 'NotoSansKR',
-                fontSize: 16,
-                height: 1.5,
-              ),
-              // 다른 텍스트 스타일도 필요에 따라 설정
-            ),
-          ),
+          theme: AppTheme.lightTheme(lightDynamic),
+          darkTheme: AppTheme.darkTheme(darkDynamic),
+          themeMode: ThemeMode.system,
           title: '리워드 팩토리', // 기본 타이틀
           onGenerateTitle: (context) {
             // 현재 로케일에 따라 타이틀 반환
             return AppLocalizations.of(context).appTitle;
+          },
+        );
           },
         );
       },

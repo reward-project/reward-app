@@ -2,9 +2,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../screens/auth/login_page.dart';
+import '../screens/auth/login_page_modern.dart';
+import '../screens/auth/login_choice_page.dart';
+import '../screens/auth/login_redirect_page.dart';
 import '../screens/auth/signin_page.dart';
 import '../screens/auth/auth_callback_page.dart';
+import '../screens/auth/oauth2_callback_page.dart';
 import '../screens/home/home_page.dart';
+import '../screens/home/home_page_modern.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../screens/mypage/mypage_screen.dart';
@@ -41,13 +46,21 @@ final router = GoRouter(
     if (path == '/auth/callback') {
       return '/$locale/auth/callback';
     }
+    
+    // OAuth2 callback 페이지
+    if (path == '/oauth2/redirect') {
+      return '/$locale/oauth2/redirect';
+    }
 
     // 인증이 필요하지 않은 경로들
     final publicPaths = [
       '/$locale/login',
+      '/$locale/login/email',
       '/$locale/signin',
       '/auth/callback', // locale 없는 버전도 추가
       '/$locale/auth/callback',
+      '/oauth2/redirect',
+      '/$locale/oauth2/redirect',
     ];
 
     // 루트 경로나 locale만 있는 경로 처리
@@ -94,9 +107,25 @@ final router = GoRouter(
         return '/$locale/auth/callback';
       },
     ),
+    // OAuth2 redirect 경로
+    GoRoute(
+      path: '/oauth2/redirect',
+      redirect: (context, state) {
+        final locale = Localizations.localeOf(context).languageCode;
+        return '/$locale/oauth2/redirect';
+      },
+    ),
     GoRoute(
       path: '/:locale/login',
-      builder: (context, state) => const LoginPage(),
+      builder: (context, state) => LoginPageModern(
+        locale: Locale(state.pathParameters['locale']!),
+      ),
+    ),
+    GoRoute(
+      path: '/:locale/login/email',
+      builder: (context, state) => LoginPage(
+        locale: Locale(state.pathParameters['locale']!),
+      ),
     ),
     GoRoute(
       path: '/:locale/signin',
@@ -105,12 +134,16 @@ final router = GoRouter(
     GoRoute(
       path: '/:locale/home',
       builder: (context, state) => HomeLayout(
-        child: HomePage(locale: Locale(state.pathParameters['locale']!)),
+        child: HomePageModern(locale: Locale(state.pathParameters['locale']!)),
       ),
     ),
     GoRoute(
       path: '/:locale/auth/callback',
       builder: (context, state) => const AuthCallbackPage(),
+    ),
+    GoRoute(
+      path: '/:locale/oauth2/redirect',
+      builder: (context, state) => const OAuth2CallbackPage(),
     ),
     GoRoute(
       path: '/:locale/mypage',

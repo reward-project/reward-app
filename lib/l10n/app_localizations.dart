@@ -98,7 +98,7 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
-  /// **'Reward App'**
+  /// **'Reward Factory'**
   String get appTitle;
 
   /// No description provided for @loginTitle.
@@ -256,6 +256,63 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Login successful'**
   String get loginSuccess;
+
+  /// No description provided for @networkError.
+  String get networkError;
+
+  /// No description provided for @rememberCredentials.
+  String get rememberCredentials;
+
+  /// No description provided for @loginDescription.
+  String get loginDescription;
+
+  /// No description provided for @salesLogin.
+  String get salesLogin;
+
+  /// No description provided for @signInWithEduSense.
+  String get signInWithEduSense;
+
+  /// No description provided for @signInWithKakao.
+  String get signInWithKakao;
+
+  /// No description provided for @selectLoginMethod.
+  String get selectLoginMethod;
+
+  /// No description provided for @choosePreferredLoginMethod.
+  String get choosePreferredLoginMethod;
+
+  /// No description provided for @nativeLogin.
+  String get nativeLogin;
+
+  /// No description provided for @nativeLoginDescription.
+  String get nativeLoginDescription;
+
+  /// No description provided for @ssoLogin.
+  String get ssoLogin;
+
+  /// No description provided for @ssoLoginDescription.
+  String get ssoLoginDescription;
+
+  /// No description provided for @loginWithEmail.
+  String get loginWithEmail;
+
+  /// No description provided for @dontHaveAccount.
+  String get dontHaveAccount;
+
+  /// No description provided for @signUp.
+  String get signUp;
+
+  /// No description provided for @or.
+  String get or;
+
+  /// No description provided for @welcomeToReward.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to Reward Factory'**
+  String get welcomeToReward;
+
+  /// No description provided for @rewardAppDescription.
+  String get rewardAppDescription;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

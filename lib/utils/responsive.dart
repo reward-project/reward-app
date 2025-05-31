@@ -12,4 +12,17 @@ bool isTablet(BuildContext context) =>
     MediaQuery.of(context).size.width >= ResponsiveBreakpoints.tablet &&
     MediaQuery.of(context).size.width < ResponsiveBreakpoints.desktop;
 bool isDesktop(BuildContext context) => 
-    MediaQuery.of(context).size.width >= ResponsiveBreakpoints.desktop; 
+    MediaQuery.of(context).size.width >= ResponsiveBreakpoints.desktop;
+
+// ResponsiveUtil 클래스 추가
+class ResponsiveUtil {
+  static bool isMobile(BuildContext context) => 
+      MediaQuery.of(context).size.width < ResponsiveBreakpoints.tablet;
+  
+  static bool isTablet(BuildContext context) => 
+      MediaQuery.of(context).size.width >= ResponsiveBreakpoints.tablet &&
+      MediaQuery.of(context).size.width < ResponsiveBreakpoints.desktop;
+  
+  static bool isDesktop(BuildContext context) => 
+      MediaQuery.of(context).size.width >= ResponsiveBreakpoints.desktop;
+} 

@@ -7,7 +7,7 @@ import '../../widgets/common/filled_text_field.dart';
 import '../../widgets/common/language_dropdown.dart';
 import 'package:go_router/go_router.dart';
 import '../../services/dio_service.dart';
-import '../../widgets/auth/google_login_button.dart';
+import '../../widgets/auth/oauth2_login_button.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import 'package:flutter/foundation.dart';
@@ -175,10 +175,80 @@ class _LoginPageState extends State<LoginPage> {
               borderRadius: BorderRadius.circular(kBorderRadius),
             ),
           ),
-          child: Text(l10n.loginButton),
+          child: Text(l10n.loginWithEmail),
+        ),
+        const SizedBox(height: 24),
+        
+        // 빠른 로그인 섹션
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.nativeLogin,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                l10n.nativeLoginDescription,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const OAuth2LoginButton(provider: 'kakao'),
+              const SizedBox(height: 8),
+              const OAuth2LoginButton(provider: 'naver'),
+              const SizedBox(height: 8),
+              const OAuth2LoginButton(provider: 'google'),
+            ],
+          ),
         ),
         const SizedBox(height: 16),
-        const GoogleLoginButton(),
+        
+        // 통합 로그인 섹션
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.blue.shade50,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.blue.shade200),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.ssoLogin,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                l10n.ssoLoginDescription,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const OAuth2LoginButton(provider: 'edusense'),
+            ],
+          ),
+        ),
         const SizedBox(height: 24),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,

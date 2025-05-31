@@ -1,1 +1,47 @@
-{"installed":{"client_id":"133048024494-s3hl3npre9hrmqeokp4pqp36me559o50.apps.googleusercontent.com","project_id":"silicon-perigee-443310-j0","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs"}}
+{
+  "project_info": {
+    "project_number": "133048024494",
+    "project_id": "silicon-perigee-443310-j0",
+    "storage_bucket": "silicon-perigee-443310-j0.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:133048024494:android:1234567890abcdef",
+        "android_client_info": {
+          "package_name": "com.outsider.reward"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "133048024494-fbrkdu27a4tuhpc6r93b7ig0pii9vbsu.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.outsider.reward",
+            "certificate_hash": "7e44678ae9e5b68609fa6dc04ddc65cc4a0c01c0"
+          }
+        },
+        {
+          "client_id": "133048024494-v9q4qimam6cl70set38o8tdbj3mcr0ss.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "YOUR_API_KEY_HERE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "133048024494-v9q4qimam6cl70set38o8tdbj3mcr0ss.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

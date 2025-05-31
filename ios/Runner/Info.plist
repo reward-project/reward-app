@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Reward</string>
+	<string>Reward Factory</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -13,7 +13,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>reward</string>
+	<string>Reward Factory</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -52,5 +52,40 @@
 		<key>NSAllowsArbitraryLoadsInWebContent</key>
 		<true/>
 	</dict>
+	
+	<!-- 카카오 로그인 설정 -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<!-- 카카오톡으로 로그인 -->
+		<string>kakaokompassauth</string>
+		<!-- 카카오톡 공유 -->
+		<string>kakaolink</string>
+		<!-- 네이버 앱으로 로그인 -->
+		<string>naversearchapp</string>
+		<string>naversearchthirdlogin</string>
+	</array>
+	
+	<!-- 카카오 로그인 커스텀 URL 스킴 -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>kakao69383ae32e0f8936472078d4f6563666</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>naverlogin</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.outsider.reward.naverlogin</string>
+			</array>
+		</dict>
+	</array>
+	
+	<!-- 카카오 SDK 설정 -->
+	<key>KAKAO_APP_KEY</key>
+	<string>69383ae32e0f8936472078d4f6563666</string>
 </dict>
 </plist>

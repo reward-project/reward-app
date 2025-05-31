@@ -35,5 +35,20 @@
   "loginFail": "로그인에 실패했습니다",
   "rememberCredentials": "이메일/비밀번호 저장",
   "loginDescription": "리워드 서비스를 이용하려면 로그인이 필요합니다.",
-  "salesLogin": "비즈니스 계정으로 참여하기"
+  "salesLogin": "비즈니스 계정으로 참여하기",
+  "signInWithEduSense": "UGOT으로 로그인",
+  "signInWithKakao": "카카오로 로그인",
+  
+  "selectLoginMethod": "로그인 방법 선택",
+  "choosePreferredLoginMethod": "원하는 로그인 방식을 선택해주세요",
+  "nativeLogin": "빠른 로그인",
+  "nativeLoginDescription": "기기의 네이티브 인증을 사용한 빠른 로그인",
+  "ssoLogin": "통합 로그인",
+  "ssoLoginDescription": "안전한 웹 기반 통합 인증을 통한 로그인",
+  "loginWithEmail": "이메일/비밀번호로 로그인",
+  "dontHaveAccount": "계정이 없으신가요?",
+  "signUp": "회원가입",
+  "or": "또는",
+  "welcomeToReward": "리워드 팩토리에 오신 것을 환영합니다",
+  "rewardAppDescription": "미션과 챌린지를 완료하여 리워드를 획득하세요"
 } 

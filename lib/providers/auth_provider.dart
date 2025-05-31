@@ -2,10 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import '../services/auth_service.dart';
+import '../services/token_exchange_service.dart';
 import '../models/api_response.dart';
 import '../models/token_dto.dart';
 import '../services/dio_service.dart';
+import '../config/app_config.dart';
 
 class AuthProvider extends ChangeNotifier {
   final BuildContext context;
@@ -41,22 +44,39 @@ class AuthProvider extends ChangeNotifier {
     if (!_isAuthenticated) return null;
 
     try {
-      final dio = DioService.instance;
-      final response = await dio.get('/members/me');
-      print('response: ${response.data}');
+      // AuthServer의 userinfo 엔드포인트 사용
+      final response = await Dio().get(
+        '${AppConfig.authServerUrl}/userinfo',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $_accessToken',
+          },
+        ),
+      );
+      
       if (kDebugMode) {
         print('fetchUserInfo response: ${response.data}');
       }
 
-      if (response.data['success']) {
-        final userData = response.data['data'] as Map<String, dynamic>;
-        _userInfo = userData;
-        notifyListeners();
-        return UserInfo.fromJson(userData);
-      }
+      // OAuth2 userinfo 응답 형식에 맞게 파싱
+      final userData = response.data as Map<String, dynamic>;
+      
+      // UserInfo 형식으로 변환
+      final userInfo = {
+        'id': userData['sub'] ?? userData['id'],
+        'email': userData['email'],
+        'name': userData['name'],
+        'nickname': userData['nickname'] ?? userData['preferred_username'],
+        'profileImage': userData['picture'] ?? userData['profileImage'],
+        'role': userData['role'] ?? 'USER',
+      };
+      
+      _userInfo = userInfo;
+      notifyListeners();
+      return UserInfo.fromJson(userInfo);
     } catch (e) {
       if (kDebugMode) {
-        print('Error fetching user info: $e');
+        print('Error fetching user info from authserver: $e');
         print('Stack trace: ${StackTrace.current}');
       }
     }
@@ -119,11 +139,19 @@ class AuthProvider extends ChangeNotifier {
       print('isAuthenticated: $_isAuthenticated');
     }
 
-    if (accessToken != null && refreshToken != null) {
-      await AuthService.saveTokens(
-        accessToken: accessToken,
-        refreshToken: refreshToken,
-      );
+    // refreshToken이 있을 때만 저장 (토큰 교환에서 refresh_token이 없을 수 있음)
+    if (accessToken != null) {
+      if (refreshToken != null) {
+        await AuthService.saveTokens(
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+        );
+      } else {
+        // refreshToken이 없는 경우 accessToken만 임시 저장
+        if (kDebugMode) {
+          print('RefreshToken is null, saving only accessToken for this session');
+        }
+      }
     }
 
     notifyListeners();
@@ -198,6 +226,105 @@ class AuthProvider extends ChangeNotifier {
           print('Error initializing user info: $e');
         }
       }
+    }
+  }
+
+  /// 구글 로그인
+  Future<bool> loginWithGoogle() async {
+    try {
+      if (kDebugMode) {
+        print('Starting Google login...');
+      }
+      
+      final tokenData = await TokenExchangeService.authenticateWithGoogle();
+      
+      if (tokenData != null) {
+        await setTokens(
+          accessToken: tokenData['access_token'],
+          refreshToken: tokenData['refresh_token'],
+        );
+        
+        if (kDebugMode) {
+          print('Google login successful');
+        }
+        return true;
+      } else {
+        if (kDebugMode) {
+          print('Google login failed: No token data');
+        }
+        return false;
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Google login error: $e');
+      }
+      return false;
+    }
+  }
+
+  /// 카카오 로그인
+  Future<bool> loginWithKakao() async {
+    try {
+      if (kDebugMode) {
+        print('Starting Kakao login...');
+      }
+      
+      final tokenData = await TokenExchangeService.authenticateWithKakao();
+      
+      if (tokenData != null) {
+        await setTokens(
+          accessToken: tokenData['access_token'],
+          refreshToken: tokenData['refresh_token'],
+        );
+        
+        if (kDebugMode) {
+          print('Kakao login successful');
+        }
+        return true;
+      } else {
+        if (kDebugMode) {
+          print('Kakao login failed: No token data');
+        }
+        return false;
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Kakao login error: $e');
+      }
+      return false;
+    }
+  }
+
+  /// 네이버 로그인
+  Future<bool> loginWithNaver() async {
+    try {
+      if (kDebugMode) {
+        print('Starting Naver login...');
+      }
+      
+      final tokenData = await TokenExchangeService.authenticateWithNaver();
+      
+      if (tokenData != null) {
+        await setTokens(
+          accessToken: tokenData['access_token'],
+          refreshToken: tokenData['refresh_token'],
+        );
+        
+        if (kDebugMode) {
+          print('Naver login successful');
+        }
+        return true;
+      } else {
+        if (kDebugMode) {
+          print('Naver login failed: No token data');
+        }
+        return false;
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Naver login error: $e');
+      }
+      return false;
     }
   }
 }

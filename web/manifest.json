@@ -1,11 +1,11 @@
 {
-    "name": "reward",
-    "short_name": "reward",
+    "name": "Reward Factory",
+    "short_name": "Reward Factory",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Reward Factory - 미션과 챌린지를 완료하여 리워드를 획득하세요",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

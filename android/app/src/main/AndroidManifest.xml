@@ -5,13 +5,17 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <queries>
         <package android:name="com.google.android.gms" />
+        <!-- 카카오톡 로그인을 위한 쿼리 (임시 비활성화) -->
+        <!-- <package android:name="com.kakao.talk" /> -->
+        <!-- 네이버 앱 로그인을 위한 쿼리 -->
+        <package android:name="com.nhn.android.search" />
     </queries>
 
     <application
     android:largeHeap="true"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:label="reward"
+        android:label="Reward Factory"
           android:hardwareAccelerated="true"
     android:usesCleartextTraffic="true"
         android:enableOnBackInvokedCallback="true">
@@ -31,6 +35,27 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        
+        <!-- 카카오 로그인 커스텀 URL 스킴 -->
+        <activity 
+            android:name="com.kakao.sdk.flutter.AuthCodeCustomTabsActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <!-- Redirect URI kakao69383ae32e0f8936472078d4f6563666://oauth 형식 -->
+                <data android:scheme="kakao69383ae32e0f8936472078d4f6563666" android:host="oauth"/>
+            </intent-filter>
+        </activity>
+        
+        <!-- 네이버 로그인 설정 -->
+        <activity
+            android:name="com.nhn.android.naverlogin.ui.view.OAuthLoginActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />

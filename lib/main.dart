@@ -6,18 +6,20 @@ import 'package:flutter/services.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'l10n/app_localizations.dart';
 import 'package:dynamic_color/dynamic_color.dart';
-import 'package:responsive_framework/responsive_framework.dart';
+import 'package:responsive_framework/responsive_framework.dart' hide ResponsiveBreakpoints;
+import 'package:responsive_framework/responsive_framework.dart' as rf;
 // import 'package:naver_login_sdk/naver_login_sdk.dart'; // API 문제로 임시 제거
 import 'router/app_router.dart';
-import 'providers/locale_provider.dart';
-import 'config/app_config.dart';
-import 'providers/auth_provider.dart';
-import 'services/dio_service.dart';
+import 'package:reward_common/config/app_config.dart' as common_config;
+import 'providers/auth_provider_extended.dart';
+import 'providers/api_provider.dart';
+// import 'services/dio_service.dart'; // 제거됨 - reward_common 사용
 import 'services/naver_login_service.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
-import 'theme/app_theme.dart';
+import 'package:reward_common/reward_common.dart';
+import 'utils/api_test_util.dart';
 
 // 웹 전용 import를 조건부로 처리
 
@@ -25,12 +27,26 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   usePathUrlStrategy();
   const env = String.fromEnvironment('ENV', defaultValue: 'dev');
-  AppConfig.initialize(env == 'prod' ? Environment.prod : Environment.dev);
+  common_config.AppConfig.initialize(
+    env: env == 'prod' ? common_config.Environment.prod : common_config.Environment.dev,
+    appType: common_config.AppType.app,
+  );
+  
+  final appConfig = common_config.AppConfig.instance;
+
+  // reward_common의 AuthConfig 초기화
+  AuthConfig.initialize(
+    authServerUrl: appConfig.authServerUrl,
+    googleWebClientId: appConfig.googleClientId,
+    kakaoNativeAppKey: appConfig.kakaoNativeAppKey,
+    naverClientId: appConfig.naverClientId,
+    naverClientSecret: appConfig.naverClientSecret,
+  );
 
   // 카카오 SDK 초기화
   if (!kIsWeb) {
     KakaoSdk.init(
-      nativeAppKey: AppConfig.kakaoNativeAppKey,
+      nativeAppKey: appConfig.kakaoNativeAppKey,
     );
     if (kDebugMode) {
       print('카카오 SDK 초기화 완료');
@@ -53,8 +69,12 @@ void main() async {
   if (kDebugMode) {
     print('\n=== App Configuration ===');
     print('🌍 Environment: ${env == 'prod' ? 'Production' : 'Development'}');
-    print('🌐 Backend URL: ${AppConfig.apiBaseUrl}${AppConfig.apiPath}');
+    print('🌐 Backend URL: ${appConfig.apiBaseUrl}${appConfig.apiPath}');
+    print('🔐 Auth Server URL: ${appConfig.authServerUrl}');
     print('========================\n');
+    
+    // API 연결 테스트 실행 (디버그 모드에서만)
+    _runApiConnectionTest();
   }
 
   final navigatorKey = GlobalKey<NavigatorState>();
@@ -64,7 +84,10 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (context) => AuthProvider(context)..initializeAuth(),
+          create: (context) => ApiProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => AppAuthProvider(context)..initializeAuth(),
         ),
         ChangeNotifierProvider(create: (_) => LocaleProvider()),
       ],
@@ -78,6 +101,38 @@ void main() async {
   // 로컬 서버 시작
   if (!kIsWeb) {
     startLocalServer(navigatorKey);
+  }
+}
+
+/// API 연결 테스트 실행 함수
+void _runApiConnectionTest() async {
+  try {
+    // 3초 후에 테스트 실행 (앱 초기화 대기)
+    await Future.delayed(const Duration(seconds: 3));
+    
+    print('\n🔌 Running API Connection Test...\n');
+    
+    // ApiTestUtil을 사용하여 테스트 실행
+    final results = await ApiTestUtil.runConnectionTest();
+    
+    // 결과 요약 출력
+    ApiTestUtil.printSummary(results);
+    
+    // 실패한 연결이 있는지 확인
+    bool hasFailures = false;
+    results.forEach((key, value) {
+      if (value['status'] == 'failed') {
+        hasFailures = true;
+      }
+    });
+    
+    if (hasFailures) {
+      print('\n⚠️  Some API connections failed. Please check your backend services.');
+    } else {
+      print('\n✅ All API connections are working properly!');
+    }
+  } catch (e) {
+    print('❌ Error during API connection test: $e');
   }
 }
 
@@ -101,7 +156,7 @@ void startLocalServer(GlobalKey<NavigatorState> navigatorKey) async {
       final locale = uri.queryParameters['locale'];
       if (accessToken != null && refreshToken != null) {
         final context = navigatorKey.currentContext!;
-        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
         authProvider.setTokens(
           accessToken: accessToken,
           refreshToken: refreshToken,
@@ -174,8 +229,8 @@ class MyApp extends StatelessWidget {
             GlobalCupertinoLocalizations.delegate,
           ],
           builder: (context, child) {
-            DioService.init(context);
-            return ResponsiveBreakpoints.builder(
+            // DioService.init(context); // 제거됨 - reward_common 사용
+            return rf.ResponsiveBreakpoints.builder(
               child: child!,
               breakpoints: [
                 const Breakpoint(start: 0, end: 450, name: MOBILE),

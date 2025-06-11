@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../providers/auth_provider.dart';
+import '../../providers/auth_provider_extended.dart';
+import 'package:reward_common/providers/auth_provider.dart';
 
 class NaverLoginButton extends StatefulWidget {
   final VoidCallback? onLoginSuccess;
@@ -27,7 +28,7 @@ class _NaverLoginButtonState extends State<NaverLoginButton> {
     });
 
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
       final success = await authProvider.loginWithNaver();
 
       if (success && mounted) {

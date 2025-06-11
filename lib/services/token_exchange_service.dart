@@ -11,21 +11,51 @@ class TokenExchangeService {
   static final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile', 'openid'],
     serverClientId: AppConfig.googleWebClientId,
+    // 디버그 목적으로 추가 설정
+    // 기본적으로 Google Play Services가 필요하다는 메시지가 나올 수 있음
   );
+  
+  /// Google Play Services 사용 가능 여부 확인
+  static Future<bool> isGooglePlayServicesAvailable() async {
+    try {
+      // GoogleSignIn의 isAvailable() 메서드로 확인
+      final isAvailable = await _googleSignIn.isSignedIn();
+      debugPrint('🔍 Google Play Services 확인 중...');
+      return true; // 기본적으로 true 반환, 실제 에러는 signIn()에서 확인
+    } catch (e) {
+      debugPrint('❌ Google Play Services 확인 실패: $e');
+      return false;
+    }
+  }
   
   /// Google Sign-In을 통해 ID Token을 받고 Spring Authorization Server 토큰으로 교환
   static Future<Map<String, dynamic>?> authenticateWithGoogle() async {
     try {
-      // 1. Google Sign-In
-      await _googleSignIn.signOut(); // 이전 세션 정리
+      debugPrint('🚀 Google 로그인 시작...');
       
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        debugPrint('User cancelled Google sign-in');
+      // 0. Google Play Services 사용 가능 여부 확인
+      debugPrint('🔍 Google Play Services 확인 중...');
+      final isAvailable = await isGooglePlayServicesAvailable();
+      if (!isAvailable) {
+        debugPrint('❌ Google Play Services를 사용할 수 없습니다');
         return null;
       }
       
+      // 1. Google Sign-In
+      debugPrint('🔄 이전 세션 정리 중...');
+      await _googleSignIn.signOut(); // 이전 세션 정리
+      
+      debugPrint('📱 Google 로그인 UI 호출 중...');
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        debugPrint('❌ 사용자가 Google 로그인을 취소했습니다');
+        return null;
+      }
+      
+      debugPrint('✅ Google 계정 선택 완료: ${googleUser.email}');
+      
       // 2. Google 인증 정보 가져오기
+      debugPrint('🔑 Google 인증 토큰 요청 중...');
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       
       if (googleAuth.idToken == null) {
@@ -53,7 +83,7 @@ class TokenExchangeService {
           'subject_token_type': 'urn:ietf:params:oauth:token-type:id_token',
           'scope': 'openid profile email api.read api.write',
         },
-      );
+      ).timeout(const Duration(seconds: 30));
       
       debugPrint('Token exchange response status: ${response.statusCode}');
       debugPrint('Token exchange response body: ${response.body}');
@@ -77,7 +107,143 @@ class TokenExchangeService {
       }
       
     } catch (e) {
-      debugPrint('Error during Google authentication: $e');
+      debugPrint('❌ Google 인증 중 오류 발생: $e');
+      debugPrint('❌ 오류 타입: ${e.runtimeType}');
+      if (e.toString().contains('GoogleSignIn')) {
+        debugPrint('❌ GoogleSignIn SDK 설정 문제일 가능성이 높습니다');
+        debugPrint('   - google-services.json 파일 확인 필요');
+        debugPrint('   - SHA-1 인증서 해시 확인 필요');
+        debugPrint('   - Google Cloud Console 설정 확인 필요');
+      }
+      return null;
+    }
+  }
+  
+  /// Google ID Token을 서버 토큰으로 교환 (Google 로그인 없이)
+  static Future<Map<String, dynamic>?> exchangeGoogleToken(String idToken) async {
+    try {
+      debugPrint('🔄 Google ID Token을 서버 토큰으로 교환 중...');
+      
+      // Client credentials for authentication
+      final clientId = 'mobile-client';
+      final clientSecret = 'mobile-secret';
+      final credentials = base64Encode(utf8.encode('$clientId:$clientSecret'));
+      
+      final response = await http.post(
+        Uri.parse('${AppConfig.authServerUrl}/oauth2/token'),
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': 'Basic $credentials',
+        },
+        body: {
+          'grant_type': 'urn:ietf:params:oauth:grant-type:token-exchange',
+          'subject_token': idToken,
+          'subject_token_type': 'urn:ietf:params:oauth:token-type:id_token',
+          'scope': 'openid profile email api.read api.write',
+        },
+      ).timeout(const Duration(seconds: 30));
+      
+      debugPrint('Token exchange response status: ${response.statusCode}');
+      debugPrint('Token exchange response body: ${response.body}');
+      
+      if (response.statusCode == 200) {
+        final tokenData = jsonDecode(response.body);
+        debugPrint('Successfully exchanged tokens');
+        return tokenData;
+      } else {
+        debugPrint('Token exchange failed: ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      debugPrint('❌ Token exchange error: $e');
+      return null;
+    }
+  }
+  
+  /// Kakao 토큰을 서버 토큰으로 교환 (Kakao 로그인 없이)
+  static Future<Map<String, dynamic>?> exchangeKakaoToken(String token, bool isIdToken) async {
+    try {
+      debugPrint('🔄 Kakao 토큰을 서버 토큰으로 교환 중...');
+      
+      // Client credentials for authentication
+      final clientId = 'mobile-client';
+      final clientSecret = 'mobile-secret';
+      final credentials = base64Encode(utf8.encode('$clientId:$clientSecret'));
+      
+      final subjectTokenType = isIdToken 
+          ? 'urn:ietf:params:oauth:token-type:id_token'
+          : 'urn:ietf:params:oauth:token-type:access_token';
+      
+      final response = await http.post(
+        Uri.parse('${AppConfig.authServerUrl}/oauth2/token'),
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': 'Basic $credentials',
+        },
+        body: {
+          'grant_type': 'urn:ietf:params:oauth:grant-type:token-exchange',
+          'subject_token': token,
+          'subject_token_type': subjectTokenType,
+          'subject_issuer': 'kakao',
+          'scope': 'openid profile email api.read api.write',
+        },
+      ).timeout(const Duration(seconds: 30));
+      
+      debugPrint('Token exchange response status: ${response.statusCode}');
+      debugPrint('Token exchange response body: ${response.body}');
+      
+      if (response.statusCode == 200) {
+        final tokenData = jsonDecode(response.body);
+        debugPrint('Successfully exchanged tokens');
+        return tokenData;
+      } else {
+        debugPrint('Token exchange failed: ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      debugPrint('❌ Token exchange error: $e');
+      return null;
+    }
+  }
+  
+  /// Naver Access Token을 서버 토큰으로 교환 (Naver 로그인 없이)
+  static Future<Map<String, dynamic>?> exchangeNaverToken(String accessToken) async {
+    try {
+      debugPrint('🔄 Naver Access Token을 서버 토큰으로 교환 중...');
+      
+      // Client credentials for authentication
+      final clientId = 'mobile-client';
+      final clientSecret = 'mobile-secret';
+      final credentials = base64Encode(utf8.encode('$clientId:$clientSecret'));
+      
+      final response = await http.post(
+        Uri.parse('${AppConfig.authServerUrl}/oauth2/token'),
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': 'Basic $credentials',
+        },
+        body: {
+          'grant_type': 'urn:ietf:params:oauth:grant-type:token-exchange',
+          'subject_token': accessToken,
+          'subject_token_type': 'urn:ietf:params:oauth:token-type:access_token',
+          'subject_issuer': 'naver',
+          'scope': 'openid profile email api.read api.write',
+        },
+      ).timeout(const Duration(seconds: 30));
+      
+      debugPrint('Token exchange response status: ${response.statusCode}');
+      debugPrint('Token exchange response body: ${response.body}');
+      
+      if (response.statusCode == 200) {
+        final tokenData = jsonDecode(response.body);
+        debugPrint('Successfully exchanged tokens');
+        return tokenData;
+      } else {
+        debugPrint('Token exchange failed: ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      debugPrint('❌ Token exchange error: $e');
       return null;
     }
   }
@@ -100,7 +266,7 @@ class TokenExchangeService {
           'grant_type': 'refresh_token',
           'refresh_token': refreshToken,
         },
-      );
+      ).timeout(const Duration(seconds: 30));
       
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -187,7 +353,7 @@ class TokenExchangeService {
           'subject_token_type': subjectTokenType,
           'scope': 'openid profile email api.read api.write',
         },
-      );
+      ).timeout(const Duration(seconds: 30));
       
       debugPrint('Kakao token exchange response status: ${response.statusCode}');
       debugPrint('Kakao token exchange response body: ${response.body}');

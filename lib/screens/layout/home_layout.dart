@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../utils/responsive.dart';
+import 'package:reward_common/utils/responsive.dart';
 
 class HomeLayout extends StatelessWidget {
   final Widget child;

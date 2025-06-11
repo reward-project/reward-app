@@ -1,4 +1,4 @@
-import 'package:reward/config/app_config.dart';
+import '../config/app_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -75,5 +75,58 @@ class AuthService {
   static Future<bool> isAuthenticated() async {
     final token = await getToken();
     return token != null;
+  }
+
+  // PKCE 파라미터 저장
+  static Future<void> storePKCEParameters(String codeVerifier, String state) async {
+    if (kIsWeb) {
+      WebStorage.setItem('code_verifier', codeVerifier);
+      WebStorage.setItem('oauth_state', state);
+    } else if (AppConfig.isDesktop) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('code_verifier', codeVerifier);
+      await prefs.setString('oauth_state', state);
+    } else {
+      await _secureStorage.write(key: 'code_verifier', value: codeVerifier);
+      await _secureStorage.write(key: 'oauth_state', value: state);
+    }
+  }
+
+  // PKCE 파라미터 가져오기
+  static Future<Map<String, String?>> getPKCEParameters() async {
+    String? codeVerifier;
+    String? state;
+    
+    if (kIsWeb) {
+      codeVerifier = WebStorage.getItem('code_verifier');
+      state = WebStorage.getItem('oauth_state');
+    } else if (AppConfig.isDesktop) {
+      final prefs = await SharedPreferences.getInstance();
+      codeVerifier = prefs.getString('code_verifier');
+      state = prefs.getString('oauth_state');
+    } else {
+      codeVerifier = await _secureStorage.read(key: 'code_verifier');
+      state = await _secureStorage.read(key: 'oauth_state');
+    }
+    
+    return {
+      'codeVerifier': codeVerifier,
+      'state': state,
+    };
+  }
+
+  // PKCE 파라미터 삭제
+  static Future<void> clearPKCEParameters() async {
+    if (kIsWeb) {
+      WebStorage.removeItem('code_verifier');
+      WebStorage.removeItem('oauth_state');
+    } else if (AppConfig.isDesktop) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('code_verifier');
+      await prefs.remove('oauth_state');
+    } else {
+      await _secureStorage.delete(key: 'code_verifier');
+      await _secureStorage.delete(key: 'oauth_state');
+    }
   }
 } 

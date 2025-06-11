@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:url_launcher/url_launcher.dart';
 import '../../config/app_config.dart';
-import '../../widgets/auth/oauth2_login_button.dart';
+import '../../services/auth_service.dart';
 import 'dart:math';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
@@ -54,6 +54,9 @@ class _LoginRedirectPageState extends State<LoginRedirectPage> {
       if (AppConfig.usePKCE) {
         codeVerifier = _generateCodeVerifier();
         state = _generateState();
+        
+        // Store PKCE parameters for later use in callback
+        await AuthService.storePKCEParameters(codeVerifier, state);
         
         if (kDebugMode) {
           print('Code verifier: $codeVerifier');

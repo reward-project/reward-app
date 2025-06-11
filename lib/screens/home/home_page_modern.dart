@@ -5,10 +5,14 @@ import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
-import '../../providers/auth_provider.dart';
-import '../../services/dio_service.dart';
-import '../../widgets/modern_widgets.dart';
+import '../../providers/auth_provider_extended.dart';
+import 'package:reward_common/providers/auth_provider.dart';
+import '../../providers/api_provider.dart';
+// import '../../services/dio_service.dart'; // 제거됨 - reward_common 사용
+import 'package:reward_common/reward_common.dart';
+// import '../../widgets/modern_widgets.dart'; // reward_common으로 이동됨
 import '../../theme/app_theme.dart';
+import 'package:reward_common/utils/context_extensions.dart';
 
 class HomePageModern extends StatefulWidget {
   final Locale locale;
@@ -26,6 +30,7 @@ class _HomePageModernState extends State<HomePageModern> with TickerProviderStat
   bool _isLoading = true;
   late AnimationController _pointAnimationController;
   late Animation<int> _pointAnimation;
+  bool _pointAnimationInitialized = false;
   
   // 주간 포인트 데이터 (샘플)
   final List<FlSpot> _weeklyPoints = [
@@ -58,21 +63,22 @@ class _HomePageModernState extends State<HomePageModern> with TickerProviderStat
     setState(() => _isLoading = true);
     
     try {
-      final authProvider = context.read<AuthProvider>();
-      final user = await authProvider.user;
+      final authProvider = context.read<AppAuthProvider>();
+      final user = await authProvider.userInfo;
       
       if (user != null) {
         setState(() {
-          _userNickname = user.nickname;
+          _userNickname = user.name ?? '';
         });
       }
 
       try {
-        final dio = DioService.instance;
-        final response = await dio.get('/members/me/point');
+        final apiResponse = await context.apiService.getWrapped<Map<String, dynamic>>(
+          '/members/me/point',
+        );
 
-        if (response.data['success']) {
-          final newPoint = (response.data['data']['point'] as num?)?.toInt() ?? 0;
+        if (apiResponse.success && apiResponse.data != null) {
+          final newPoint = (apiResponse.data!['point'] as num?)?.toInt() ?? 0;
           
           // 포인트 애니메이션 설정
           _pointAnimation = IntTween(
@@ -83,6 +89,7 @@ class _HomePageModernState extends State<HomePageModern> with TickerProviderStat
             curve: Curves.easeOutQuart,
           ));
           
+          _pointAnimationInitialized = true;
           _pointAnimationController.forward(from: 0);
           
           setState(() {
@@ -91,6 +98,16 @@ class _HomePageModernState extends State<HomePageModern> with TickerProviderStat
           });
         }
       } catch (e) {
+        // 포인트 정보를 가져오지 못한 경우 기본값으로 초기화
+        _pointAnimation = IntTween(
+          begin: 0,
+          end: 0,
+        ).animate(CurvedAnimation(
+          parent: _pointAnimationController,
+          curve: Curves.easeOutQuart,
+        ));
+        _pointAnimationInitialized = true;
+        
         setState(() => _point = 0);
       }
     } catch (e) {
@@ -263,18 +280,26 @@ class _HomePageModernState extends State<HomePageModern> with TickerProviderStat
                     ),
                   ),
                   const SizedBox(height: 8),
-                  AnimatedBuilder(
-                    animation: _pointAnimation,
-                    builder: (context, child) {
-                      return Text(
-                        '${_pointAnimation.value}P',
-                        style: context.textTheme.displaySmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: context.colorScheme.primary,
+                  _pointAnimationInitialized
+                      ? AnimatedBuilder(
+                          animation: _pointAnimation,
+                          builder: (context, child) {
+                            return Text(
+                              '${_pointAnimation.value}P',
+                              style: context.textTheme.displaySmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: context.colorScheme.primary,
+                              ),
+                            );
+                          },
+                        )
+                      : Text(
+                          '${_point}P',
+                          style: context.textTheme.displaySmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: context.colorScheme.primary,
+                          ),
                         ),
-                      );
-                    },
-                  ),
                 ],
               ),
               Container(

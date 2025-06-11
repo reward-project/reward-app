@@ -1,21 +1,38 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform, kDebugMode;
+import '../../l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import '../../constants/styles.dart';
-import '../../widgets/common/language_dropdown.dart';
-import '../../widgets/auth/oauth2_login_button.dart';
-import '../../utils/responsive.dart';
+import 'package:reward_common/widgets/common/language_dropdown.dart';
+import 'package:reward_common/widgets/social_login_button.dart';
+import 'package:reward_common/utils/responsive.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../config/app_config.dart';
+import '../../services/auth_service.dart';
+import '../../services/google_login_service.dart';
+import '../../services/kakao_login_service.dart';
+import '../../services/naver_login_service.dart';
+import 'package:provider/provider.dart';
+import 'package:reward_common/providers/auth_provider.dart';
+import 'dart:math';
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 
-class LoginChoicePage extends StatelessWidget {
+class LoginChoicePage extends StatefulWidget {
   final Locale? locale;
 
   const LoginChoicePage({super.key, this.locale});
 
   @override
+  State<LoginChoicePage> createState() => _LoginChoicePageState();
+}
+
+class _LoginChoicePageState extends State<LoginChoicePage> {
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final locale = this.locale?.languageCode ?? Localizations.localeOf(context).languageCode;
+    final locale = widget.locale?.languageCode ?? Localizations.localeOf(context).languageCode;
 
     return Scaffold(
       body: SafeArea(
@@ -227,14 +244,26 @@ class LoginChoicePage extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 16),
-        const OAuth2LoginButton(provider: 'google'),
+        SocialLoginButton(
+          type: SocialLoginType.google,
+          onPressed: () => _handleOAuth2Login(context, 'google'),
+          text: l10n.loginWithGoogle,
+        ),
         const SizedBox(height: 12),
         // 모바일에서만 카카오, 네이버 네이티브 로그인 표시
         if (!kIsWeb && (defaultTargetPlatform == TargetPlatform.android || 
                         defaultTargetPlatform == TargetPlatform.iOS)) ...[
-          const OAuth2LoginButton(provider: 'kakao'),
+          SocialLoginButton(
+            type: SocialLoginType.kakao,
+            onPressed: () => _handleOAuth2Login(context, 'kakao'),
+            text: l10n.loginWithKakao,
+          ),
           const SizedBox(height: 12),
-          const OAuth2LoginButton(provider: 'naver'),
+          SocialLoginButton(
+            type: SocialLoginType.naver,
+            onPressed: () => _handleOAuth2Login(context, 'naver'),
+            text: l10n.loginWithNaver,
+          ),
         ],
       ],
     );
@@ -281,11 +310,19 @@ class LoginChoicePage extends StatelessWidget {
         // 모바일에서는 Google SSO 버튼 숨김 (네이티브 로그인 사용)
         if (!(!kIsWeb && (defaultTargetPlatform == TargetPlatform.android || 
                           defaultTargetPlatform == TargetPlatform.iOS)))
-          const OAuth2LoginButton(provider: 'google'),
+          SocialLoginButton(
+            type: SocialLoginType.google,
+            onPressed: () => _handleOAuth2Login(context, 'google'),
+            text: l10n.loginWithGoogle,
+          ),
         if (!(!kIsWeb && (defaultTargetPlatform == TargetPlatform.android || 
                           defaultTargetPlatform == TargetPlatform.iOS)))
           const SizedBox(height: 12),
-        const OAuth2LoginButton(provider: 'edusense'),
+        SocialLoginButton(
+          type: SocialLoginType.edusense,
+          onPressed: () => _handleOAuth2Login(context, 'edusense'),
+          text: l10n.loginWithEdusense,
+        ),
       ],
     );
   }
@@ -293,5 +330,211 @@ class LoginChoicePage extends StatelessWidget {
   Widget _buildAlternativeLoginSection(BuildContext context, AppLocalizations l10n, String locale) {
     // 이메일/비밀번호 로그인과 회원가입 링크 제거 - UGOT에서 모든 기능 제공
     return const SizedBox.shrink();
+  }
+
+  // OAuth2 로그인 처리 메서드
+  Future<void> _handleOAuth2Login(BuildContext context, String provider) async {
+    if (kDebugMode) print('Starting OAuth2 login process for $provider');
+
+    // 구글의 경우 네이티브 SDK 사용 (웹 제외)
+    if (provider == 'google' && !kIsWeb) {
+      await _handleGoogleLogin();
+      return;
+    }
+
+    // 카카오의 경우 네이티브 SDK 사용 (웹 제외)
+    if (provider == 'kakao' && !kIsWeb) {
+      await _handleKakaoLogin();
+      return;
+    }
+
+    // 네이버의 경우 네이티브 SDK 사용 (웹 제외)
+    if (provider == 'naver' && !kIsWeb) {
+      await _handleNaverLogin();
+      return;
+    }
+
+    // 기존 OAuth2 방식 (웹이거나 다른 provider인 경우)
+    try {
+      // Generate PKCE parameters
+      String? codeVerifier;
+      String? state;
+      
+      if (AppConfig.usePKCE) {
+        codeVerifier = _generateCodeVerifier();
+        state = _generateState();
+        
+        // Store PKCE parameters for later use in callback
+        await AuthService.storePKCEParameters(codeVerifier, state);
+        
+        if (kDebugMode) {
+          print('Code verifier: $codeVerifier');
+          print('State: $state');
+        }
+      }
+
+      // Build authorization URL
+      final queryParams = <String, String>{
+        'response_type': 'code',
+        'client_id': AppConfig.oauth2ClientId,
+        'redirect_uri': AppConfig.oauth2RedirectUri,
+        'scope': 'openid profile email api.read api.write',
+        'state': state ?? '',
+      };
+
+      if (provider != 'edusense') {
+        queryParams['provider'] = provider;
+      }
+
+      if (AppConfig.usePKCE && codeVerifier != null) {
+        queryParams['code_challenge'] = _generateCodeChallenge(codeVerifier);
+        queryParams['code_challenge_method'] = 'S256';
+      }
+
+      final authUrl = Uri.parse('${AppConfig.authServerUrl}/oauth2/authorize')
+          .replace(queryParameters: queryParams);
+
+      if (kDebugMode) print('Redirecting to: $authUrl');
+
+      // Launch authorization URL
+      await launchUrl(
+        authUrl,
+        mode: LaunchMode.platformDefault,
+        webOnlyWindowName: '_self',
+      );
+    } catch (e) {
+      if (kDebugMode) print('OAuth2 error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('로그인 실패: $e')),
+        );
+      }
+    }
+  }
+
+  /// 구글 로그인 처리
+  Future<void> _handleGoogleLogin() async {
+    try {
+      if (kDebugMode) print('🔵 구글 로그인 시작');
+      
+      final tokenDto = await GoogleLoginService.signIn();
+      
+      if (tokenDto != null && mounted) {
+        if (kDebugMode) print('✅ 구글 로그인 성공');
+        
+        final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+        await authProvider.setTokens(
+          accessToken: tokenDto.accessToken,
+          refreshToken: tokenDto.refreshToken,
+        );
+        
+        if (mounted) {
+          final currentLocale = Localizations.localeOf(context).languageCode;
+          context.go('/$currentLocale/home');
+        }
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('구글 로그인에 실패했습니다.')),
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) print('❌ 구글 로그인 에러: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('구글 로그인 실패: $e')),
+        );
+      }
+    }
+  }
+
+  /// 카카오 로그인 처리
+  Future<void> _handleKakaoLogin() async {
+    try {
+      if (kDebugMode) print('🟡 카카오 로그인 시작');
+      
+      final tokenDto = await KakaoLoginService.signIn();
+      
+      if (tokenDto != null && mounted) {
+        if (kDebugMode) print('✅ 카카오 로그인 성공');
+        
+        final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+        await authProvider.setTokens(
+          accessToken: tokenDto.accessToken,
+          refreshToken: tokenDto.refreshToken,
+        );
+        
+        if (mounted) {
+          final currentLocale = Localizations.localeOf(context).languageCode;
+          context.go('/$currentLocale/home');
+        }
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('카카오 로그인에 실패했습니다.')),
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) print('❌ 카카오 로그인 에러: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('카카오 로그인 실패: $e')),
+        );
+      }
+    }
+  }
+
+  /// 네이버 로그인 처리
+  Future<void> _handleNaverLogin() async {
+    try {
+      if (kDebugMode) print('🟢 네이버 로그인 시작');
+      
+      final tokenDto = await NaverLoginService.signIn();
+      
+      if (tokenDto != null && mounted) {
+        if (kDebugMode) print('✅ 네이버 로그인 성공');
+        
+        final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+        await authProvider.setTokens(
+          accessToken: tokenDto.accessToken,
+          refreshToken: tokenDto.refreshToken,
+        );
+        
+        if (mounted) {
+          final currentLocale = Localizations.localeOf(context).languageCode;
+          context.go('/$currentLocale/home');
+        }
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('네이버 로그인에 실패했습니다.')),
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) print('❌ 네이버 로그인 에러: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('네이버 로그인 실패: $e')),
+        );
+      }
+    }
+  }
+
+  // PKCE code verifier generator
+  String _generateCodeVerifier() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+    final random = Random.secure();
+    return List.generate(128, (_) => chars[random.nextInt(chars.length)]).join();
+  }
+
+  // PKCE code challenge generator
+  String _generateCodeChallenge(String verifier) {
+    final bytes = utf8.encode(verifier);
+    final digest = sha256.convert(bytes);
+    return base64Url.encode(digest.bytes).replaceAll('=', '');
+  }
+
+  // Generate random state
+  String _generateState() {
+    final random = Random.secure();
+    final values = List<int>.generate(16, (i) => random.nextInt(256));
+    return base64Url.encode(values).replaceAll('=', '');
   }
 }

@@ -1,3 +1,5 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -109,19 +111,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectLoginMethod => 'Choose Login Method';
 
   @override
-  String get choosePreferredLoginMethod => 'Select your preferred way to sign in';
+  String get choosePreferredLoginMethod =>
+      'Select your preferred way to sign in';
 
   @override
   String get nativeLogin => 'Quick Login';
 
   @override
-  String get nativeLoginDescription => 'Sign in directly using your device\'s native authentication';
+  String get nativeLoginDescription =>
+      'Sign in directly using your device\'s native authentication';
 
   @override
   String get ssoLogin => 'SSO Login';
 
   @override
-  String get ssoLoginDescription => 'Sign in through secure web-based authentication';
+  String get ssoLoginDescription =>
+      'Sign in through secure web-based authentication';
 
   @override
   String get loginWithEmail => 'Login with Email/Password';
@@ -139,5 +144,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get welcomeToReward => 'Welcome to Reward Factory';
 
   @override
-  String get rewardAppDescription => 'Earn rewards by completing missions and challenges';
+  String get rewardAppDescription =>
+      'Earn rewards by completing missions and challenges';
 }

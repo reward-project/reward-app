@@ -1,142 +1,56 @@
-import 'package:flutter/foundation.dart'
-    show kIsWeb, defaultTargetPlatform, TargetPlatform;
-import 'dart:io' show Platform;
-import 'dart:convert';
+import 'package:reward_common/config/app_config.dart' as common;
 
-enum Environment {
-  dev,
-  prod,
-}
-
+/// reward_app을 위한 AppConfig 래퍼
+/// 기존 코드와의 호환성을 위해 static 접근을 제공합니다.
 class AppConfig {
-  static Environment _environment = Environment.dev;
-
-  static String get businessDomain => _environment == Environment.prod
-      ? 'https://business.reward-factory.shop'
-      : 'http://localhost:46152';
-  static void initialize(Environment env) {
-    _environment = env;
+  static final _instance = common.AppConfig.instance;
+  
+  static common.Environment get _environment => _instance.environment;
+  
+  static void initialize(common.Environment env) {
+    // 이미 main.dart에서 초기화됨
   }
   
-  static bool get isDebug => _environment == Environment.dev;
-
-  static bool get isDesktop =>
-      !kIsWeb &&
-      (defaultTargetPlatform == TargetPlatform.windows ||
-          defaultTargetPlatform == TargetPlatform.linux ||
-          defaultTargetPlatform == TargetPlatform.macOS);
-
-  static String get apiBaseUrl {
-    if (_environment == Environment.dev && !kIsWeb) {
-      if (Platform.isAndroid) {
-        // Windows 호스트 서버에 접근
-        return 'http://192.168.219.112:8882'; // Reward server port
-      }
-    }
-
-    return const String.fromEnvironment(
-      'API_BASE_URL',
-      defaultValue: 'http://localhost:8882', // Reward server port
-    );
-  }
-
-  // AuthServer configuration
-  static String get authServerUrl {
-    if (_environment == Environment.prod) {
-      return 'https://auth.edu-sense.shop';
-    }
-    
-    if (!kIsWeb && Platform.isAndroid) {
-      // Windows 호스트 서버에 접근
-      return 'http://192.168.219.112:8881'; // AuthServer
-    }
-    
-    return 'http://localhost:8881'; // Development AuthServer
-  }
-
-  static String get apiPath => '/api/v1';
-
-  // OAuth2 client configuration
-  static String get oauth2ClientId => 'reward-client';
+  static bool get isDesktop => _instance.isDesktop;
   
-  // OAuth2 redirect URI
-  static String get oauth2RedirectUri {
-    if (_environment == Environment.prod) {
-      return 'https://reward-factory.shop/oauth2/redirect';
-    }
-    
-    if (kIsWeb) {
-      return 'http://localhost:46151/oauth2/redirect';
-    }
-    
-    // Mobile app uses local server callback
-    return 'http://localhost:8765/auth/callback';
-  }
-
-  static String get rewardAppUrl => _environment == Environment.prod
-      ? 'https://app.reward-factory.shop'
-      : 'http://localhost:46151';
-      
-  // PKCE configuration (required for mobile public clients)
-  static bool get usePKCE => true;
+  static String get apiBaseUrl => _instance.apiBaseUrl;
   
-  // Google OAuth2 Web Client ID (for mobile apps)
-  static String get googleWebClientId {
-    // .env 파일에서 가져온 값을 사용
-    return '133048024494-v9q4qimam6cl70set38o8tdbj3mcr0ss.apps.googleusercontent.com';
-  }
-
-  // Kakao SDK configuration (모바일 전용)
-  static String get kakaoNativeAppKey {
-    return const String.fromEnvironment(
-      'KAKAO_NATIVE_APP_KEY',
-      defaultValue: '69383ae32e0f8936472078d4f6563666',
-    );
-  }
+  static String get authServerUrl => _instance.authServerUrl;
   
-  // Naver SDK configuration (모바일 전용)
-  static String get naverClientId {
-    return const String.fromEnvironment(
-      'NAVER_CLIENT_ID',
-      defaultValue: '2aGPAheEeSLvfbHOHDIB',
-    );
-  }
+  static String get apiPath => _instance.apiPath;
   
-  static String get naverClientSecret {
-    return const String.fromEnvironment(
-      'NAVER_CLIENT_SECRET',
-      defaultValue: '1wIsTdaF8Z',
-    );
-  }
+  static String get oauth2ClientId => _instance.oauth2ClientId;
   
-  static String get naverClientName {
-    return const String.fromEnvironment(
-      'NAVER_CLIENT_NAME',
-      defaultValue: 'Reward Factory',
-    );
-  }
+  static String get oauth2RedirectUri => _instance.oauth2RedirectUri;
   
-  // Mobile client credentials for Token Exchange
-  static String getMobileClientCredentials() {
-    const clientId = 'mobile-client';
-    const clientSecret = 'mobile-secret';
-    final credentials = '$clientId:$clientSecret';
-    return base64Encode(utf8.encode(credentials));
-  }
+  static bool get usePKCE => _instance.usePKCE;
   
-  // Edusense SSO configuration
-  static String get edusenseAuthUrl {
-    if (_environment == Environment.prod) {
-      return 'https://auth.edu-sense.shop/oauth2/authorize';
-    }
-    
-    if (!kIsWeb && Platform.isAndroid) {
-      // Windows 호스트 서버에 접근
-      return 'http://192.168.219.112:8881/oauth2/authorize';
-    }
-    
-    return 'http://localhost:8881/oauth2/authorize';
-  }
+  static String get googleWebClientId => _instance.googleClientId;
   
-  static String get edusenseClientId => 'reward-client';
+  static String get kakaoNativeAppKey => _instance.kakaoNativeAppKey;
+  
+  static String get kakaoJavaScriptKey => _instance.kakaoJavaScriptKey;
+  
+  static String get naverClientId => _instance.naverClientId;
+  
+  static String get naverClientSecret => _instance.naverClientSecret;
+  
+  static String get naverClientName => _instance.naverClientName;
+  
+  // 일반 앱 전용 getter들
+  static String get businessDomain => _instance.businessDomain;
+  
+  static bool get isDebug => _instance.isDebug;
+  
+  static String get rewardApiUrl => _instance.rewardApiUrl;
+  
+  static String get edusenseAuthUrl => _instance.edusenseAuthUrl;
+  
+  static String get edusenseClientId => _instance.edusenseClientId;
+  
+  static Map<String, String> getMobileClientCredentials() =>
+      _instance.getMobileClientCredentials();
 }
+
+// 기존 코드와의 호환성을 위한 Environment export
+typedef Environment = common.Environment;

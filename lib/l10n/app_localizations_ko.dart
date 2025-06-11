@@ -1,3 +1,5 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -73,7 +75,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get emailVerifySuccess => '이메일 인증이 완료되었습니다';
 
   @override
-  String get emailVerifyFail => '이메�� 인증에 실패했습니다';
+  String get emailVerifyFail => '이메일 인증에 실패했습니다';
 
   @override
   String get signupSuccess => '회원가입이 완료되었습니다';

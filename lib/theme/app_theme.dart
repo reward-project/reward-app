@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:dynamic_color/dynamic_color.dart';
+// import 'package:dynamic_color/dynamic_color.dart'; // Unused import
 
 class AppTheme {
   // Modern color palette
@@ -8,7 +8,7 @@ class AppTheme {
   static const _secondaryColor = Color(0xFF00ACC1); // Cyan
   static const _tertiaryColor = Color(0xFFFF6F00); // Amber
   static const _errorColor = Color(0xFFD32F2F);
-  static const _successColor = Color(0xFF388E3C);
+  // static const _successColor = Color(0xFF388E3C); // Unused field
   
   // Neutral colors
   static const _surfaceColor = Color(0xFFFAFAFA);
@@ -23,7 +23,7 @@ class AppTheme {
       tertiary: _tertiaryColor,
       error: _errorColor,
       surface: _surfaceColor,
-      background: _backgroundColor,
+      // background: _backgroundColor, // Deprecated in Flutter 3.19+
     );
 
     return ThemeData(
@@ -99,12 +99,8 @@ class AppTheme {
         ),
       ),
       
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: colorScheme.outlineVariant.withOpacity(0.5)),
-        ),
         clipBehavior: Clip.antiAlias,
       ),
       
@@ -116,7 +112,7 @@ class AppTheme {
       
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: colorScheme.surfaceVariant.withOpacity(0.3),
+        fillColor: colorScheme.surface.withOpacity(0.3),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
@@ -161,11 +157,7 @@ class AppTheme {
         ),
       ),
       
-      dialogTheme: DialogTheme(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(28),
-        ),
-      ),
+      dialogTheme: DialogThemeData(),
       
       bottomSheetTheme: const BottomSheetThemeData(
         shape: RoundedRectangleBorder(
@@ -188,24 +180,24 @@ class AppTheme {
       ),
       
       switchTheme: SwitchThemeData(
-        thumbColor: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
             return colorScheme.primary;
           }
-          return colorScheme.surfaceVariant;
+          return colorScheme.surface;
         }),
-        trackColor: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
             return colorScheme.primary.withOpacity(0.5);
           }
-          return colorScheme.surfaceVariant.withOpacity(0.5);
+          return colorScheme.surface.withOpacity(0.5);
         }),
       ),
       
       progressIndicatorTheme: ProgressIndicatorThemeData(
         color: colorScheme.primary,
-        linearTrackColor: colorScheme.surfaceVariant,
-        circularTrackColor: colorScheme.surfaceVariant,
+        linearTrackColor: colorScheme.surface,
+        circularTrackColor: colorScheme.surface,
       ),
       
       floatingActionButtonTheme: FloatingActionButtonThemeData(
@@ -218,7 +210,7 @@ class AppTheme {
       
       segmentedButtonTheme: SegmentedButtonThemeData(
         style: ButtonStyle(
-          shape: MaterialStateProperty.all(
+          shape: WidgetStateProperty.all(
             RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
@@ -241,7 +233,7 @@ class AppTheme {
       tertiary: const Color(0xFFFFB74D),
       error: const Color(0xFFEF5350),
       surface: const Color(0xFF1E1E1E),
-      background: const Color(0xFF121212),
+      // background: const Color(0xFF121212), // Deprecated in Flutter 3.19+
     );
 
     return ThemeData(
@@ -266,63 +258,4 @@ class AppTheme {
       // ... other component themes inherit from light theme
     );
   }
-}
-
-// Extension for easy access to theme colors
-extension ThemeExtension on BuildContext {
-  ThemeData get theme => Theme.of(this);
-  TextTheme get textTheme => Theme.of(this).textTheme;
-  ColorScheme get colorScheme => Theme.of(this).colorScheme;
-  
-  // Custom colors
-  Color get primaryContainer => colorScheme.primaryContainer;
-  Color get onPrimaryContainer => colorScheme.onPrimaryContainer;
-  Color get secondaryContainer => colorScheme.secondaryContainer;
-  Color get onSecondaryContainer => colorScheme.onSecondaryContainer;
-  Color get tertiaryContainer => colorScheme.tertiaryContainer;
-  Color get onTertiaryContainer => colorScheme.onTertiaryContainer;
-  
-  // Semantic colors
-  Color get success => AppTheme._successColor;
-  Color get successContainer => AppTheme._successColor.withOpacity(0.12);
-  Color get onSuccess => Colors.white;
-  
-  // Spacing
-  double get spacing => 8.0;
-  double get spacingSmall => 4.0;
-  double get spacingLarge => 16.0;
-  double get spacingXLarge => 24.0;
-  double get spacingXXLarge => 32.0;
-  
-  // Border radius
-  BorderRadius get radiusSmall => BorderRadius.circular(8);
-  BorderRadius get radiusMedium => BorderRadius.circular(12);
-  BorderRadius get radiusLarge => BorderRadius.circular(16);
-  BorderRadius get radiusXLarge => BorderRadius.circular(24);
-  BorderRadius get radiusCircular => BorderRadius.circular(999);
-  
-  // Shadows
-  List<BoxShadow> get shadowSmall => [
-    BoxShadow(
-      color: Colors.black.withOpacity(0.05),
-      offset: const Offset(0, 2),
-      blurRadius: 4,
-    ),
-  ];
-  
-  List<BoxShadow> get shadowMedium => [
-    BoxShadow(
-      color: Colors.black.withOpacity(0.08),
-      offset: const Offset(0, 4),
-      blurRadius: 8,
-    ),
-  ];
-  
-  List<BoxShadow> get shadowLarge => [
-    BoxShadow(
-      color: Colors.black.withOpacity(0.12),
-      offset: const Offset(0, 8),
-      blurRadius: 16,
-    ),
-  ];
 }

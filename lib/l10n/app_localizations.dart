@@ -62,7 +62,8 @@ import 'app_localizations_ko.dart';
 /// be consistent with the languages listed in the AppLocalizations.supportedLocales
 /// property.
 abstract class AppLocalizations {
-  AppLocalizations(String locale) : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+  AppLocalizations(String locale)
+      : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -70,7 +71,8 @@ abstract class AppLocalizations {
     return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
   }
 
-  static const LocalizationsDelegate<AppLocalizations> delegate = _AppLocalizationsDelegate();
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
 
   /// A list of this localizations delegate along with the default localizations
   /// delegates.
@@ -82,7 +84,8 @@ abstract class AppLocalizations {
   /// Additional delegates can be added by appending to this list in
   /// MaterialApp. This list does not have to be used at all if a custom list
   /// of delegates is preferred or required.
-  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates = <LocalizationsDelegate<dynamic>>[
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
+      <LocalizationsDelegate<dynamic>>[
     delegate,
     GlobalMaterialLocalizations.delegate,
     GlobalCupertinoLocalizations.delegate,
@@ -258,51 +261,99 @@ abstract class AppLocalizations {
   String get loginSuccess;
 
   /// No description provided for @networkError.
+  ///
+  /// In en, this message translates to:
+  /// **'Network error occurred. Please try again.'**
   String get networkError;
 
   /// No description provided for @rememberCredentials.
+  ///
+  /// In en, this message translates to:
+  /// **'Remember Email/Password'**
   String get rememberCredentials;
 
   /// No description provided for @loginDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Login is required to use the reward service.'**
   String get loginDescription;
 
   /// No description provided for @salesLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Join as Business Account'**
   String get salesLogin;
 
   /// No description provided for @signInWithEduSense.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with UGOT'**
   String get signInWithEduSense;
 
   /// No description provided for @signInWithKakao.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with Kakao'**
   String get signInWithKakao;
 
   /// No description provided for @selectLoginMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Login Method'**
   String get selectLoginMethod;
 
   /// No description provided for @choosePreferredLoginMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Select your preferred way to sign in'**
   String get choosePreferredLoginMethod;
 
   /// No description provided for @nativeLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Login'**
   String get nativeLogin;
 
   /// No description provided for @nativeLoginDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in directly using your device\'s native authentication'**
   String get nativeLoginDescription;
 
   /// No description provided for @ssoLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'SSO Login'**
   String get ssoLogin;
 
   /// No description provided for @ssoLoginDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in through secure web-based authentication'**
   String get ssoLoginDescription;
 
   /// No description provided for @loginWithEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Login with Email/Password'**
   String get loginWithEmail;
 
   /// No description provided for @dontHaveAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t have an account?'**
   String get dontHaveAccount;
 
   /// No description provided for @signUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign Up'**
   String get signUp;
 
   /// No description provided for @or.
+  ///
+  /// In en, this message translates to:
+  /// **'OR'**
   String get or;
 
   /// No description provided for @welcomeToReward.
@@ -312,10 +363,14 @@ abstract class AppLocalizations {
   String get welcomeToReward;
 
   /// No description provided for @rewardAppDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Earn rewards by completing missions and challenges'**
   String get rewardAppDescription;
 }
 
-class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
 
   @override
@@ -324,25 +379,25 @@ class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> 
   }
 
   @override
-  bool isSupported(Locale locale) => <String>['en', 'ko'].contains(locale.languageCode);
+  bool isSupported(Locale locale) =>
+      <String>['en', 'ko'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
 }
 
 AppLocalizations lookupAppLocalizations(Locale locale) {
-
-
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
-    case 'en': return AppLocalizationsEn();
-    case 'ko': return AppLocalizationsKo();
+    case 'en':
+      return AppLocalizationsEn();
+    case 'ko':
+      return AppLocalizationsKo();
   }
 
   throw FlutterError(
-    'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
-    'an issue with the localizations generation tool. Please file an issue '
-    'on GitHub with a reproducible sample app and the gen-l10n configuration '
-    'that was used.'
-  );
+      'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+      'an issue with the localizations generation tool. Please file an issue '
+      'on GitHub with a reproducible sample app and the gen-l10n configuration '
+      'that was used.');
 }
